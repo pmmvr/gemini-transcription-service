@@ -1,0 +1,38 @@
+services:
+  gemini-transcription:
+    build: .
+    container_name: gemini-transcription-service
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./transcripts:/app/transcripts
+      - ./summaries:/app/summaries
+      - ./.env:/app/.env
+      # - ${GOOGLE_APPLICATION_CREDENTIALS}:/app/credentials/gcp-credentials.json:ro
+    environment:
+      # Core settings
+      - PORT=5000
+      - HOST=0.0.0.0
+      - UPLOAD_FOLDER=/app/uploads
+      - TRANSCRIPT_FOLDER=/app/transcripts
+      - SUMMARY_FOLDER=/app/summaries
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      # - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/gcp-credentials.json
+      
+      # Feature flags
+      - KEEP_LOCAL_AUDIO=${KEEP_LOCAL_AUDIO:-true}
+      - GENERATE_SUMMARY=${GENERATE_SUMMARY:-true}
+      - DEBUG=${DEBUG:-false}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+      
+      # Required for Docker when using a mounted .env file 
+      - PYTHONPATH=/app
+      
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
