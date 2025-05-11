@@ -1,0 +1,39 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment variables
+.env
+
+# IDE / Editor specific
+.idea/
+.vscode/
+.DS_Store
+
+# Dependency management / Version control
+uv.lock
+.python-version
+
+# Project specific folders
+uploads/
+transcripts/
+summaries/
+.gcs/
+
+# Audio and generated files
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.flac
+*.mp4
+*_transcript.txt
+*_summary.txt
+
