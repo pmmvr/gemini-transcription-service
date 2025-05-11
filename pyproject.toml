@@ -12,6 +12,13 @@ dependencies = [
     "gunicorn>=21.2.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "behave>=1.2.6",
+    "requests>=2.0.0",
+]
+
+
 [project.scripts]
 transcribe = "gemini_transcription_service.transcribe:main"
 webserver = "run:app"
