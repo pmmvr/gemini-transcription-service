@@ -89,7 +89,7 @@ See the `pyproject.toml` file for specific version requirements.
 
 ## Google Cloud Storage Integration (Optional)
 
-The service can store transcripts and audio files in Google Cloud Storage, but this is entirely optional. By default, all files are stored locally.
+The service can store transcripts, summaries, and audio files in Google Cloud Storage, but this is entirely optional. By default, all files are stored locally.
 
 To enable GCS integration:
 
@@ -105,6 +105,11 @@ To enable GCS integration:
    AUDIO_BUCKET_NAME=your-audio-bucket-name
    AUDIO_PATH_PREFIX=audio/
 
+   # Google Cloud Storage Configuration for Summaries (optional)
+   SUMMARY_STORAGE_ENABLED=true
+   SUMMARY_BUCKET_NAME=your-gcs-bucket-name
+   SUMMARY_PATH_PREFIX=summaries/
+
    # Google Cloud Authentication
    GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account-key.json
    ```
@@ -112,3 +117,12 @@ To enable GCS integration:
 2. Ensure you have valid GCP credentials and the appropriate permissions for the specified buckets.
 
 If GCS integration is disabled (the default), all files will be stored in the local directories specified by `OUTPUT_DIR` and `SUMMARY_PATH`.
+
+### File Naming in GCS
+
+To prevent accidental overwrites when storing files in GCS:
+
+- All files (transcripts, summaries, and audio) automatically include timestamps in their filenames (e.g., `meeting_summary_20240511_123045.txt`)
+- Each upload generates a unique filename, even if the content is identical
+- Files are organized in the GCS bucket according to the configured prefix paths
+- This automatic timestamp can be disabled if needed by setting `prevent_overwrite=False` when using the StorageHandler directly

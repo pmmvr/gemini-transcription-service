@@ -46,11 +46,7 @@ class TranscriptProcessor:
             # GCS upload
             if self.TRANSCRIPT_STORAGE_ENABLED:
                 try:
-                    prefix = os.getenv("TRANSCRIPT_PATH_PREFIX", "transcripts/")
-                    if not prefix.endswith('/'):
-                        prefix += '/'
-                    
-                    gcs_uri = self.gcs_handler.upload_file(output_path, f"{prefix}{output_name}")
+                    gcs_uri = self.gcs_handler.upload_file(output_path)
                     if gcs_uri:
                         logger.info(f"Uploaded to GCS: {gcs_uri}")
                 except Exception as e:
@@ -67,6 +63,7 @@ class TranscriptProcessor:
         if not response or not response.strip():
             return ""
         
+
         try:
             preview = response[:100].replace("\n", " ")
             if len(response) > 100:

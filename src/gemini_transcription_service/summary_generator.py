@@ -7,6 +7,7 @@ from google.genai import types
 
 from .config import SAFETY_SETTINGS
 from .transcription_logic import configure_generation
+from .storage_handler import SummaryStorageHandler
 
 # Load environment variables from .env file
 load_dotenv(override=True)
@@ -148,9 +149,25 @@ class SummaryGenerator:
 
             output_path = os.path.join(effective_output_dir, output_name)
 
-            # Save file
+            # Save file locally
             with open(output_path, 'w', encoding='utf-8') as f:
                 f.write(summary)
+
+            # Check if we need to upload to GCS
+            store_summary = os.getenv("SUMMARY_STORAGE_ENABLED", "false").lower() in ["true", "1", "yes"]
+
+            if store_summary:
+                try:
+                    # Initialize and use GCS storage handler
+                    handler = SummaryStorageHandler()
+                    if handler.initialize():
+                        # Upload file with automatic timestamp to prevent overwriting
+                        gcs_uri = handler.upload_file(output_path)
+                        if gcs_uri:
+                            logger.info(f"Summary uploaded to GCS: {gcs_uri}")
+                except Exception as e:
+                    logger.warning(f"Failed to upload summary to GCS: {e}")
+
             return output_path
         except IOError as e:
             logger.error(f"Error saving summary to {output_path}: {e}")
