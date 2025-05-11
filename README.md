@@ -1,12 +1,13 @@
 # Gemini Transcription Service
 
-A service for transcribing audio files using Google's Gemini API.
+A service for transcribing audio files using Google's Gemini API with web UI.
 
 ## Features
 
 - Audio to text transcription using Gemini
 - Meeting summary generation
 - Local storage of transcripts and summaries
+- Web interface for uploading audio and viewing transcripts
 - Optional Google Cloud Storage integration (disabled by default)
 
 ## Setup
@@ -57,11 +58,40 @@ You can configure the service using the `.env` file:
 - Transcription files are saved to the directory specified by `OUTPUT_DIR` (default: `./transcripts`)
 - Summary files are saved to the directory specified by `SUMMARY_PATH` (default: `./summaries`)
 
+## Web Interface
+
+The service includes a simple web interface for transcribing audio files:
+
+1. Start the web server (three options):
+   ```bash
+   # Option 1: Simple script (recommended)
+   python run.py
+
+   # Option 2: Using Flask development server
+   # First create .flaskenv with: FLASK_APP=src.gemini_transcription_service.webapp.app
+   flask run
+
+   # Option 3: Using Gunicorn (for production)
+   gunicorn -c gunicorn_config.py run:app
+   ```
+
+2. Open http://localhost:5000 in your browser
+
+3. Upload any audio file (.wav, .mp3, .m4a, .flac)
+
+4. The interface will display:
+   - The complete transcript with speaker detection
+   - Options to generate and view meeting summaries
+   - Buttons to download both transcripts and summaries
+
+The web interface makes it easy to process audio files without using the command line. Configuration options are available in your `.env` file.
+
 ## Project Structure
 
 ```
 gemini-transcription-service/
 ├── main.py                    # CLI entry point
+├── run.py                     # Web interface runner
 ├── src/                       # Source code
 │   └── gemini_transcription_service/
 │       ├── config.py          # Configuration settings
@@ -69,11 +99,16 @@ gemini-transcription-service/
 │       ├── summary_generator.py # Summary generation
 │       ├── transcribe.py      # Core transcription service
 │       ├── transcript_processor.py # Process transcripts
-│       └── transcription_logic.py # Transcription business logic
+│       ├── transcription_logic.py # Transcription business logic
+│       └── webapp/            # Web interface
+│           ├── app.py         # Flask application
+│           └── templates/     # HTML templates
 ├── uploads/                   # Temp storage for uploads
 ├── transcripts/               # Output directory for transcripts
 ├── summaries/                 # Output directory for summaries
 ├── .env.example               # Example environment variables
+├── .flaskenv                  # Flask configuration
+├── gunicorn_config.py         # Gunicorn configuration
 └── pyproject.toml             # Project dependencies and metadata
 ```
 
@@ -83,6 +118,7 @@ This project uses modern Python packaging with `pyproject.toml`. The key depende
 
 - `google-genai` - Google's Generative AI client library
 - `python-dotenv` - For environment variable management
+- `flask` - For the web interface
 - `google-cloud-storage` - For optional GCS integration
 
 See the `pyproject.toml` file for specific version requirements.

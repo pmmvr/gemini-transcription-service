@@ -1,17 +1,20 @@
 [project]
 name = "gemini-transcription-service"
 version = "0.1.0"
-description = "Audio transcription service using Google's Gemini API"
+description = "Audio transcription service using Google's Gemini API with web UI"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "google-genai>=1.11.0",
     "python-dotenv>=1.0.1",
+    "Flask>=3.0.0",
     "google-cloud-storage>=2.13.0",
+    "gunicorn>=21.2.0",
 ]
 
 [project.scripts]
 transcribe = "gemini_transcription_service.transcribe:main"
+webserver = "run:app"
 
 [build-system]
 requires = ["setuptools>=61.0"]

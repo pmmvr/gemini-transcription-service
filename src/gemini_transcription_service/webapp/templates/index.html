@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Gemini Transcription Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TODO: Use build process with PostCSS for production -->
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+    <div class="max-w-4xl mx-auto my-8 p-8 bg-white rounded-lg shadow-md">
+        <h1 class="text-2xl md:text-3xl font-bold text-blue-600 text-center mb-6">Upload Audio for Transcription</h1>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="mb-4 space-y-2">
+            {% for category, message in messages %}
+              <li class="{% if category == 'success' %}bg-green-100 border border-green-200 text-green-800{% elif category == 'error' %}bg-red-100 border border-red-200 text-red-800{% else %}bg-blue-100 border border-blue-200 text-blue-800{% endif %} p-3 rounded-md">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Upload form -->
+        <form method=post enctype=multipart/form-data action="{{ url_for('upload_file') }}" id="uploadForm" class="mb-8 text-center">
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+                <input type="file" name="file" id="fileInput" accept="{{ allowed_extensions_for_accept | join(',') }}" class="w-full cursor-pointer p-2 mb-2 text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            </div>
+            <button type="submit" id="submitButton" class="py-2 px-6 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">Upload and Transcribe</button>
+        </form>
+
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="hidden text-center my-8 text-gray-600 text-lg italic">
+            Processing your file... Please wait.
+        </div>
+
+        {% if transcript %}
+        <!-- Tab navigation -->
+        <div class="border-b border-gray-200" role="tablist">
+            <div class="flex space-x-2">
+                <button class="tab active px-4 py-2 border-t border-l border-r rounded-t-md bg-white border-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset" data-tab="transcript" role="tab" aria-selected="true" aria-controls="transcript-tab">Transcript</button>
+                <button class="tab px-4 py-2 border-t border-l border-r rounded-t-md bg-gray-100 border-gray-200 font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset" data-tab="summary" role="tab" aria-selected="false" aria-controls="summary-tab">Meeting Summary</button>
+            </div>
+        </div>
+        
+        <!-- Transcript tab -->
+        <div class="tab-content active border border-t-0 border-gray-200 bg-white rounded-b-md p-5" id="transcript-tab" role="tabpanel" aria-labelledby="transcript-tab">
+            <div class="p-6 rounded-md bg-gray-50 border border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4">Transcription Result:</h2>
+                
+                <div class="mt-4">
+                    <div class="flex flex-col md:flex-row gap-5">
+                        <div class="flex-grow">
+                            <textarea id="transcript-content" class="w-full h-96 p-3 border border-gray-300 rounded-md font-mono resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ transcript }}</textarea>
+                        </div>
+                        <!-- Speaker replacement panel -->
+                        <div class="w-full md:w-1/3 bg-gray-50 p-4 rounded-md border border-gray-200">
+                            <h3 class="font-semibold mb-3 text-gray-700">Replace Speakers</h3>
+                            <div id="speaker-list" class="max-h-72 overflow-y-auto mb-4 space-y-3"></div>
+                            <button id="apply-speaker-names" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Apply Changes</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Download options -->
+                {% if download_filename %}
+                <div class="flex justify-end gap-3 mt-4">
+                    <a href="{{ url_for('download_file', filename=download_filename) }}" download class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Original (.txt)</a>
+                    <a href="#" id="download-modified" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Modified (.txt)</a>
+                </div>
+                {% endif %}
+                
+                <div class="flex space-x-3 mt-6">
+                    <button id="generate-summary-btn" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Generate Meeting Summary</button>
+                </div>
+                
+                <div id="summary-loading" class="hidden text-center my-5 text-gray-500 italic before:content-['⏳_Generating_summary...']"></div>
+            </div>
+        </div>
+        
+        <!-- Summary tab -->
+        <div class="tab-content hidden border border-t-0 border-gray-200 bg-white rounded-b-md p-5" id="summary-tab" role="tabpanel" aria-labelledby="summary-tab">
+            <div id="summary-section" class="hidden pt-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-700">Meeting Summary:</h2>
+                    <div class="flex gap-3">
+                        <a href="#" id="download-summary" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Summary (.txt)</a>
+                        <button id="copy-summary-btn" class="py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Copy to Clipboard</button>
+                    </div>
+                </div>
+                
+                <textarea id="summary-content" class="w-full h-72 p-3 border border-gray-300 rounded-md font-sans resize-y mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                
+                <div class="flex space-x-3">
+                    <button id="feedback-btn" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Provide Feedback on Summary</button>
+                </div>
+                
+                <!-- Feedback panel -->
+                <div id="feedback-panel" class="hidden mt-5 p-4 border border-gray-200 rounded-md bg-gray-50">
+                    <div class="font-semibold mb-3 text-gray-700">What would you like to improve about this summary?</div>
+                    <textarea id="summary-feedback" placeholder="Please explain what aspects of the summary you'd like to improve..." class="w-full h-20 p-3 border border-gray-300 rounded-md font-sans resize-y mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    <div class="flex space-x-3">
+                        <button id="regenerate-btn" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Regenerate Summary</button>
+                        <button id="cancel-feedback-btn" class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Cancel</button>
+                    </div>
+                    <div id="regenerate-loading" class="hidden text-center my-5 text-gray-500 italic before:content-['⏳_Regenerating_summary...']"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const submitButton = document.getElementById('submitButton');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const originalFilePath = "{% if original_filepath %}{{ original_filepath }}{% else %}{% endif %}";
+        
+        // Form submission handler
+        uploadForm.addEventListener('submit', function(event) {
+            if (fileInput.files.length === 0) {
+                alert('Please select a file first.');
+                event.preventDefault();
+                return;
+            }
+            submitButton.disabled = true;
+            submitButton.textContent = 'Uploading...';
+            loadingIndicator.classList.remove('hidden');
+        });
+
+        // Init on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // Tab switching
+            if (tabs.length > 0) {
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabId = this.getAttribute('data-tab');
+                        
+                        // Update tabs
+                        tabs.forEach(t => {
+                            t.classList.remove('active', 'bg-white', 'font-medium');
+                            t.classList.add('bg-gray-100', 'font-normal');
+                            t.setAttribute('aria-selected', 'false');
+                        });
+                        this.classList.remove('bg-gray-100', 'font-normal');
+                        this.classList.add('active', 'bg-white', 'font-medium');
+                        this.setAttribute('aria-selected', 'true');
+                        
+                        // Update content
+                        tabContents.forEach(content => {
+                            content.classList.add('hidden');
+                            content.classList.remove('active');
+                            if (content.id === `${tabId}-tab`) {
+                                content.classList.remove('hidden');
+                                content.classList.add('active');
+                            }
+                        });
+                    });
+                });
+            }
+            
+            // Speaker replacement
+            const transcriptContent = document.getElementById('transcript-content');
+            const speakerList = document.getElementById('speaker-list');
+            const applyButton = document.getElementById('apply-speaker-names');
+            const downloadModifiedBtn = document.getElementById('download-modified');
+            
+            if (transcriptContent) {
+                const text = transcriptContent.value;
+                const speakerRegex = /\[(Speaker \d+)/g;
+                const uniqueSpeakers = new Set();
+                
+                // Extract speakers
+                let match;
+                while ((match = speakerRegex.exec(text)) !== null) {
+                    uniqueSpeakers.add(match[1]);
+                }
+                
+                // Create UI elements
+                Array.from(uniqueSpeakers).sort().forEach(speaker => {
+                    const speakerItem = document.createElement('div');
+                    speakerItem.className = 'p-3 bg-white rounded border border-gray-200';
+                    
+                    const label = document.createElement('label');
+                    label.textContent = speaker;
+                    label.className = 'block mb-2 font-medium text-gray-700';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = 'Enter real name';
+                    input.dataset.speaker = speaker;
+                    input.className = 'w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+                    
+                    speakerItem.appendChild(label);
+                    speakerItem.appendChild(input);
+                    speakerList.appendChild(speakerItem);
+                });
+                
+                // Apply speaker replacements
+                applyButton.addEventListener('click', function() {
+                    let modifiedText = transcriptContent.value;
+                    const inputs = speakerList.querySelectorAll('input');
+                    
+                    inputs.forEach(input => {
+                        const speaker = input.dataset.speaker;
+                        const realName = input.value.trim();
+                        
+                        if (realName) {
+                            const regex = new RegExp(`\\[${speaker}`, 'g');
+                            modifiedText = modifiedText.replace(regex, `[${realName}`);
+                        }
+                    });
+                    
+                    transcriptContent.value = modifiedText;
+                });
+                
+                // Download handler
+                if (downloadModifiedBtn) {
+                    downloadModifiedBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        const blob = new Blob([transcriptContent.value], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        
+                        a.href = url;
+                        a.download = 'modified_transcript.txt';
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Cleanup
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        }, 100);
+                    });
+                }
+                
+                // Summary generation
+                const generateSummaryBtn = document.getElementById('generate-summary-btn');
+                const summarySection = document.getElementById('summary-section');
+                const summaryContent = document.getElementById('summary-content');
+                const summaryLoading = document.getElementById('summary-loading');
+                const downloadSummaryBtn = document.getElementById('download-summary');
+                const feedbackBtn = document.getElementById('feedback-btn');
+                const feedbackPanel = document.getElementById('feedback-panel');
+                const summaryFeedback = document.getElementById('summary-feedback');
+                const regenerateBtn = document.getElementById('regenerate-btn');
+                const cancelFeedbackBtn = document.getElementById('cancel-feedback-btn');
+                const regenerateLoading = document.getElementById('regenerate-loading');
+                const copySummaryBtn = document.getElementById('copy-summary-btn');
+                
+                // Copy to clipboard
+                if (copySummaryBtn) {
+                    copySummaryBtn.addEventListener('click', function() {
+                        if (summaryContent.value) {
+                            navigator.clipboard.writeText(summaryContent.value)
+                                .then(() => {
+                                    // Visual feedback
+                                    const originalText = this.textContent;
+                                    this.textContent = 'Copied!';
+                                    this.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+                                    this.classList.add('bg-green-600', 'hover:bg-green-700');
+                                    
+                                    setTimeout(() => {
+                                        this.textContent = originalText;
+                                        this.classList.remove('bg-green-600', 'hover:bg-green-700');
+                                        this.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                                    }, 2000);
+                                })
+                                .catch(err => {
+                                    console.error('Failed to copy text: ', err);
+                                    alert('Failed to copy to clipboard');
+                                });
+                        }
+                    });
+                }
+                
+                // Generate summary
+                if (generateSummaryBtn) {
+                    generateSummaryBtn.addEventListener('click', function() {
+                        // Get mappings
+                        const speakerMapping = {};
+                        const inputs = speakerList.querySelectorAll('input');
+                        
+                        inputs.forEach(input => {
+                            const speaker = input.dataset.speaker;
+                            const realName = input.value.trim();
+                            
+                            if (realName) {
+                                speakerMapping[speaker] = realName;
+                            }
+                        });
+                        
+                        // UI: loading
+                        summaryLoading.classList.remove('hidden');
+                        generateSummaryBtn.disabled = true;
+                        generateSummaryBtn.textContent = 'Generating...';
+                        
+                        // API call
+                        fetch('/generate-summary', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                transcript: transcriptContent.value,
+                                speaker_mapping: speakerMapping,
+                                input_path: originalFilePath
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Reset UI
+                            summaryLoading.classList.add('hidden');
+                            generateSummaryBtn.disabled = false;
+                            generateSummaryBtn.textContent = 'Generate Meeting Summary';
+                            
+                            if (data.success) {
+                                // Show summary
+                                summarySection.classList.remove('hidden');
+                                summaryContent.value = data.summary;
+                                
+                                // Switch tab
+                                document.querySelector('.tab[data-tab="summary"]').click();
+                                
+                                // Setup download
+                                if (downloadSummaryBtn && data.download_filename) {
+                                    downloadSummaryBtn.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        window.location.href = `/download/${data.download_filename}`;
+                                    });
+                                }
+                            } else {
+                                alert('Failed to generate summary: ' + (data.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            // Error handling
+                            summaryLoading.classList.add('hidden');
+                            generateSummaryBtn.disabled = false;
+                            generateSummaryBtn.textContent = 'Generate Meeting Summary';
+                            alert('Error: ' + error);
+                        });
+                    });
+                }
+                
+                // Show feedback panel
+                if (feedbackBtn) {
+                    feedbackBtn.addEventListener('click', function() {
+                        feedbackPanel.classList.remove('hidden');
+                        summaryFeedback.focus();
+                    });
+                }
+                
+                // Cancel feedback
+                if (cancelFeedbackBtn) {
+                    cancelFeedbackBtn.addEventListener('click', function() {
+                        feedbackPanel.classList.add('hidden');
+                        summaryFeedback.value = '';
+                    });
+                }
+                
+                // Regenerate with feedback
+                if (regenerateBtn) {
+                    regenerateBtn.addEventListener('click', function() {
+                        const feedback = summaryFeedback.value.trim();
+                        
+                        if (!feedback) {
+                            alert('Please provide feedback for regenerating the summary.');
+                            return;
+                        }
+                        
+                        // UI: loading
+                        regenerateLoading.classList.remove('hidden');
+                        regenerateBtn.disabled = true;
+                        regenerateBtn.textContent = 'Regenerating...';
+                        
+                        // API call
+                        fetch('/regenerate-summary', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                original_transcript: transcriptContent.value,
+                                previous_summary: summaryContent.value,
+                                feedback: feedback,
+                                input_path: originalFilePath
+                            }),
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Reset UI
+                            regenerateLoading.classList.add('hidden');
+                            regenerateBtn.disabled = false;
+                            regenerateBtn.textContent = 'Regenerate Summary';
+                            
+                            if (data.success) {
+                                // Update summary
+                                summaryContent.value = data.summary;
+                                
+                                // Hide panel
+                                feedbackPanel.classList.add('hidden');
+                                summaryFeedback.value = '';
+                                
+                                // Update download
+                                if (downloadSummaryBtn && data.download_filename) {
+                                    downloadSummaryBtn.href = `/download/${data.download_filename}`;
+                                }
+                            } else {
+                                alert('Failed to regenerate summary: ' + (data.error || 'Unknown error'));
+                            }
+                        })
+                        .catch(error => {
+                            // Error handling
+                            regenerateLoading.classList.add('hidden');
+                            regenerateBtn.disabled = false;
+                            regenerateBtn.textContent = 'Regenerate Summary';
+                            alert('Error: ' + error);
+                        });
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
