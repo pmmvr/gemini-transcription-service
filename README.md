@@ -2,6 +2,10 @@
 
 A service for transcribing audio files using Google's Gemini API with web UI.
 
+### Try live: [gemini-transcription-service.fly.dev](https://gemini-transcription-service.fly.dev)
+
+---
+
 ## Features
 
 - Audio to text transcription using Gemini
