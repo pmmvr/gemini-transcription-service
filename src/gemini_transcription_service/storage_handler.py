@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import mimetypes
 from google import genai
 from google.cloud import storage
 from google.cloud.exceptions import GoogleCloudError
@@ -144,7 +145,25 @@ def upload_file(client: genai.Client, path: str, store_audio: Optional[bool] = N
     try:
         name = os.path.basename(path)
         logger.info(f"Uploading {name} to Gemini")
-        file = client.files.upload(file=str(path))
+        
+       # Determinate MIME type
+        mime_type = mimetypes.guess_type(path)[0]
+        if not mime_type:
+            ext = os.path.splitext(path)[1].lower()
+            mime_map = {
+                '.mp3': 'audio/mpeg',
+                '.wav': 'audio/wav',
+                '.m4a': 'audio/mp4',
+                '.ogg': 'audio/ogg',
+                '.flac': 'audio/flac',
+                '.aac': 'audio/aac',
+                '.mp4': 'video/mp4',
+                '.webm': 'video/webm'
+            }
+            mime_type = mime_map.get(ext, 'application/octet-stream')
+            logger.info(f"Mime type not detected automatically, using {mime_type} for {ext}")
+        
+        file = client.files.upload(file=str(path), mime_type=mime_type)
 
         # Wait for file processing to complete
         while file.state.name == "PROCESSING":
