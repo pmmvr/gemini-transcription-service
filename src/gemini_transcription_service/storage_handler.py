@@ -146,7 +146,7 @@ def upload_file(client: genai.Client, path: str, store_audio: Optional[bool] = N
         name = os.path.basename(path)
         logger.info(f"Uploading {name} to Gemini")
         
-       # Determinate MIME type
+        # Determine MIME type
         mime_type = mimetypes.guess_type(path)[0]
         if not mime_type:
             ext = os.path.splitext(path)[1].lower()
@@ -163,7 +163,11 @@ def upload_file(client: genai.Client, path: str, store_audio: Optional[bool] = N
             mime_type = mime_map.get(ext, 'application/octet-stream')
             logger.info(f"Mime type not detected automatically, using {mime_type} for {ext}")
         
-        file = client.files.upload(file=str(path), mime_type=mime_type)
+        # Use config paramer instead of passing directly
+        file = client.files.upload(
+            file=str(path),
+            config={"mime_type": mime_type}
+        )
 
         # Wait for file processing to complete
         while file.state.name == "PROCESSING":
