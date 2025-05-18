@@ -67,6 +67,7 @@ def stream_transcription(client, model, contents, config, file_path):
             config=config,
         )
         for chunk in stream:
+            if chunk.text is not None:
                 output += chunk.text
         return output
     except Exception as e:

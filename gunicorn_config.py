@@ -23,7 +23,7 @@ max_requests = 1000
 max_requests_jitter = 50  # Prevent all workers from restarting simultaneously
 
 # Timeout settings
-timeout = 120  # For long transcriptions
+timeout = 900  # For long transcriptions
 keepalive = 5
 
 # Server settings

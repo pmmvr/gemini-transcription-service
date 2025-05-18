@@ -3,10 +3,13 @@ import os
 import logging
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
+import httpx
 from gemini_transcription_service.storage_handler import upload_file, delete_uploaded_file
 from gemini_transcription_service.transcription_logic import prepare_content, configure_generation, stream_transcription
 from gemini_transcription_service.transcript_processor import TranscriptProcessor
 from gemini_transcription_service.summary_generator import SummaryGenerator
+from .exceptions import TranscriptionTimeoutError
 
 # Ensure environment variables are loaded
 load_dotenv()
@@ -23,7 +26,11 @@ class TranscriptionService:
         # Init client
         logger.info("Loading application configuration...")
         logger.info("Initializing Gemini client...")
-        self.client = genai.Client(api_key = os.getenv("GEMINI_API_KEY"))
+        http_options = types.HttpOptions(timeout=900000) # 15 minutes
+        self.client = genai.Client(
+            api_key=os.getenv("GEMINI_API_KEY"),
+            http_options=http_options
+        )
 
     def _cleanup(self):
         try:
@@ -81,6 +88,12 @@ class TranscriptionService:
                     config=gen_config,
                     file_path=file_path,
                 )
+            except (httpx.RemoteProtocolError, httpx.ReadTimeout) as http_timeout_err:
+                logger.error(f"HTTP timeout/disconnect during transcription stream: {http_timeout_err}")
+                api_error = True
+                raise TranscriptionTimeoutError(
+                    "Transcription timed out, recording might be too long and consider splitting it into smaller segments."
+                ) from http_timeout_err
             except Exception as api_e:
                 logger.error(f"API error during transcription: {api_e}")
                 api_error = True
@@ -128,6 +141,8 @@ class TranscriptionService:
                 error_reason = "API error occurred" if api_error else "empty response"
                 logger.warning(f"Skipping processing and saving due to {error_reason}.")
 
+        except TranscriptionTimeoutError:
+            raise
         except Exception as e:
             logger.error(f"An error occurred during transcription for {file_path}: {e}", exc_info=True)
         finally:
