@@ -1,0 +1,42 @@
+<!-- Tab navigation -->
+<div class="border-b border-gray-200" role="tablist">
+    <div class="flex space-x-2">
+        <button class="tab active px-4 py-2 border-t border-l border-r rounded-t-md bg-white border-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset" data-tab="transcript" role="tab" aria-selected="true" aria-controls="transcript-tab">Transcript</button>
+        <button class="tab px-4 py-2 border-t border-l border-r rounded-t-md bg-gray-100 border-gray-200 font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset" data-tab="summary" role="tab" aria-selected="false" aria-controls="summary-tab">Meeting Summary</button>
+    </div>
+</div>
+
+<!-- Transcript tab -->
+<div class="tab-content active border border-t-0 border-gray-200 bg-white rounded-b-md p-5" id="transcript-tab" role="tabpanel" aria-labelledby="transcript-tab">
+    <div class="p-6 rounded-md bg-gray-50 border border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Transcription Result:</h2>
+        
+        <div class="mt-4">
+            <div class="flex flex-col md:flex-row gap-5">
+                <div class="flex-grow">
+                    <textarea id="transcript-content" class="w-full h-96 p-3 border border-gray-300 rounded-md font-mono resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ transcript }}</textarea>
+                </div>
+                <!-- Speaker replacement panel -->
+                <div class="w-full md:w-1/3 bg-gray-50 p-4 rounded-md border border-gray-200">
+                    <h3 class="font-semibold mb-3 text-gray-700">Replace Speakers</h3>
+                    <div id="speaker-list" class="max-h-72 overflow-y-auto mb-4 space-y-3"></div>
+                    <button id="apply-speaker-names" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Apply Changes</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Download options -->
+        {% if download_filename %}
+        <div class="flex justify-end gap-3 mt-4">
+            <a href="{{ url_for('download_file', filename=download_filename) }}" download class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Original (.txt)</a>
+            <a href="#" id="download-modified" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Modified (.txt)</a>
+        </div>
+        {% endif %}
+        
+        <div class="flex space-x-3 mt-6">
+            <button id="generate-summary-btn" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Generate Meeting Summary</button>
+        </div>
+        
+        <div id="summary-loading" class="hidden text-center my-5 text-gray-500 italic before:content-['⏳_Generating_summary...']"></div>
+    </div>
+</div> 

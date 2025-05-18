@@ -1,0 +1,28 @@
+<!-- File info display -->
+<div id="fileInfoDisplay" class="hidden mb-4 p-3 rounded-md bg-blue-100 border border-blue-200 text-blue-800">
+    <div class="flex items-center justify-between">
+        <div>
+            <span class="font-medium">Selected File: </span>
+            <span id="selectedFileName">No file selected</span>
+        </div>
+        <button id="clearFileBtn" class="text-blue-700 hover:text-blue-900" type="button">×</button>
+    </div>
+</div>
+
+<!-- Client-side duration warning -->
+<div id="durationWarning" class="hidden mb-4 p-3 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-800">
+    Warning: The selected audio is longer than 50 minutes. If transcription fails or times out, please consider splitting it into smaller segments.
+</div>
+
+<!-- Upload form -->
+<form method=post enctype=multipart/form-data action="{{ url_for('upload_file') }}" id="uploadForm" class="mb-8 text-center">
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
+        <input type="file" name="file" id="fileInput" accept="{{ allowed_extensions_for_accept | join(',') }}" class="w-full cursor-pointer p-2 mb-2 text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+    </div>
+    <button type="submit" id="submitButton" class="py-2 px-6 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">Upload and Transcribe</button>
+</form>
+
+<!-- Loading indicator -->
+<div id="loadingIndicator" class="hidden text-center my-8 text-gray-600 text-lg italic">
+    Processing your file... Please wait.
+</div> 

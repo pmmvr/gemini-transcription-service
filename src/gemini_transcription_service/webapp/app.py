@@ -8,10 +8,13 @@ from werkzeug.utils import secure_filename
 try:
     from ..transcribe import TranscriptionService
     from ..summary_generator import SummaryGenerator
+    from ..exceptions import TranscriptionTimeoutError
 except ImportError:
     # Fallback to absolute imports for Docker environment
     from src.gemini_transcription_service.transcribe import TranscriptionService
     from src.gemini_transcription_service.summary_generator import SummaryGenerator
+    from src.gemini_transcription_service.exceptions import TranscriptionTimeoutError
+    
 import logging
 from dotenv import load_dotenv
 
@@ -105,6 +108,11 @@ def upload_file():
             return render_template('index.html', transcript=transcript, download_filename=download_name, 
                                   original_filepath=filepath)
 
+        except TranscriptionTimeoutError as t_e:
+            app.logger.error(f"TranscriptionTimeoutError for {filepath}: {t_e}")
+            flash(f"{t_e} Please split the file into smaller parts and try again.", "error")
+            cleanup_file(filepath)
+            return redirect(url_for('index'))
         except Exception as e:
             app.logger.error(f"Error: {e}")
             flash(f'An error occurred: {e}')

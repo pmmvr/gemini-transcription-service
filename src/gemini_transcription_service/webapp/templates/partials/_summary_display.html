@@ -1,0 +1,29 @@
+<!-- Summary tab -->
+<div class="tab-content hidden border border-t-0 border-gray-200 bg-white rounded-b-md p-5" id="summary-tab" role="tabpanel" aria-labelledby="summary-tab">
+    <div id="summary-section" class="hidden pt-5">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold text-gray-700">Meeting Summary:</h2>
+            <div class="flex gap-3">
+                <a href="#" id="download-summary" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Summary (.txt)</a>
+                <button id="copy-summary-btn" class="py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Copy to Clipboard</button>
+            </div>
+        </div>
+        
+        <textarea id="summary-content" class="w-full h-72 p-3 border border-gray-300 rounded-md font-sans resize-y mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+        
+        <div class="flex space-x-3">
+            <button id="feedback-btn" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Provide Feedback on Summary</button>
+        </div>
+        
+        <!-- Feedback panel -->
+        <div id="feedback-panel" class="hidden mt-5 p-4 border border-gray-200 rounded-md bg-gray-50">
+            <div class="font-semibold mb-3 text-gray-700">What would you like to improve about this summary?</div>
+            <textarea id="summary-feedback" placeholder="Please explain what aspects of the summary you'd like to improve..." class="w-full h-20 p-3 border border-gray-300 rounded-md font-sans resize-y mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            <div class="flex space-x-3">
+                <button id="regenerate-btn" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Regenerate Summary</button>
+                <button id="cancel-feedback-btn" class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Cancel</button>
+            </div>
+            <div id="regenerate-loading" class="hidden text-center my-5 text-gray-500 italic before:content-['⏳_Regenerating_summary...']"></div>
+        </div>
+    </div>
+</div> 
