@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import time
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -134,43 +135,53 @@ class SummaryGenerator:
             return None
 
         try:
+            output_extension = ".txt"
             if input_path:
-                name_base = os.path.splitext(os.path.basename(input_path))[0]
-                output_name = f"{name_base}_summary.txt"
+                name_part = os.path.splitext(os.path.basename(input_path))[0]
+                base_output_name = f"{name_part}_summary"
             else:
-                import time
-                timestamp = time.strftime("%Y%m%d_%H%M%S")
-                output_name = f"meeting_summary_{timestamp}.txt"
+                current_timestamp = time.strftime("%Y%m%d_%H%M%S")
+                base_output_name = f"meeting_summary_{current_timestamp}"
 
             effective_output_dir = output_dir if output_dir is not None else os.getenv("SUMMARY_PATH", os.getenv("OUTPUT_DIR", "./summaries"))
 
             if effective_output_dir and effective_output_dir != ".":
                 os.makedirs(effective_output_dir, exist_ok=True)
+            
+            current_output_path = os.path.join(effective_output_dir, f"{base_output_name}{output_extension}")
+            final_output_path = current_output_path
 
-            output_path = os.path.join(effective_output_dir, output_name)
-
-            # Save file locally
-            with open(output_path, 'w', encoding='utf-8') as f:
+            if input_path and os.path.exists(final_output_path):
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                final_output_path = os.path.join(effective_output_dir, f"{base_output_name}_{timestamp}{output_extension}")
+            
+            with open(final_output_path, 'w', encoding='utf-8') as f:
                 f.write(summary)
+            logger.info(f"Summary saved to {final_output_path}")
 
-            # Check if we need to upload to GCS
             store_summary = os.getenv("SUMMARY_STORAGE_ENABLED", "false").lower() in ["true", "1", "yes"]
 
             if store_summary:
                 try:
-                    # Initialize and use GCS storage handler
                     handler = SummaryStorageHandler()
                     if handler.initialize():
-                        # Upload file with automatic timestamp to prevent overwriting
-                        gcs_uri = handler.upload_file(output_path)
+                        gcs_uri = handler.upload_file(final_output_path)
                         if gcs_uri:
                             logger.info(f"Summary uploaded to GCS: {gcs_uri}")
                 except Exception as e:
                     logger.warning(f"Failed to upload summary to GCS: {e}")
 
-            return output_path
+            return final_output_path
         except IOError as e:
-            logger.error(f"Error saving summary to {output_path}: {e}")
+            path_for_logging = "<unknown path>"
+            if 'final_output_path' in locals() and final_output_path:
+                path_for_logging = final_output_path
+            elif 'current_output_path' in locals() and current_output_path:
+                path_for_logging = current_output_path
+            elif 'effective_output_dir' in locals() and 'base_output_name' in locals() and 'output_extension' in locals():
+                path_for_logging = os.path.join(effective_output_dir, f"{base_output_name}{output_extension}")
+            
+            logger.error(f"Error saving summary to {path_for_logging}: {e}")
             return None
         except Exception as e:
              logger.error(f"Unexpected error saving summary: {e}", exc_info=True)

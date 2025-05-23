@@ -1,6 +1,8 @@
 import os
 import json
 import logging
+import re
+import time
 from gemini_transcription_service.storage_handler import GCSHandler
 
 logger = logging.getLogger(__name__)
@@ -30,29 +32,40 @@ class TranscriptProcessor:
 
         try:
             name, _ = os.path.splitext(os.path.basename(input_path))
-            output_name = f"{name}_transcript.txt"
+            base_output_name = f"{name}_transcript"
+            output_extension = ".txt"
 
+            # Determine initial path
             if output_dir:
                 os.makedirs(output_dir, exist_ok=True)
-                output_path = os.path.join(output_dir, output_name)
+                current_output_path = os.path.join(output_dir, f"{base_output_name}{output_extension}")
             else:
-                output_path = output_name
+                current_output_path = f"{base_output_name}{output_extension}"
 
+            final_output_path = current_output_path
+            # If exists, append timestamp to make unique
+            if os.path.exists(final_output_path):
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                if output_dir:
+                    final_output_path = os.path.join(output_dir, f"{base_output_name}_{timestamp}{output_extension}")
+                else:
+                    final_output_path = f"{base_output_name}_{timestamp}{output_extension}"
+            
             # Local save
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(final_output_path, 'w', encoding='utf-8') as f:
                 f.write(transcript)
-            logger.info(f"Saved to {output_path}")
+            logger.info(f"Saved to {final_output_path}")
             
             # GCS upload
             if self.TRANSCRIPT_STORAGE_ENABLED:
                 try:
-                    gcs_uri = self.gcs_handler.upload_file(output_path)
+                    gcs_uri = self.gcs_handler.upload_file(final_output_path)
                     if gcs_uri:
                         logger.info(f"Uploaded to GCS: {gcs_uri}")
                 except Exception as e:
                     logger.error(f"GCS upload failed: {e}")
             
-            return output_path
+            return final_output_path
 
         except Exception as e:
             logger.error(f"Error saving transcript: {e}")
