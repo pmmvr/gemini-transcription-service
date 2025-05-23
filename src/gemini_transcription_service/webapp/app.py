@@ -55,8 +55,9 @@ def cleanup_file(path):
 @app.route('/')
 def index():
     # Main page
+    model_name = os.getenv("MODEL_NAME")
     formatted_extensions = ['.' + ext for ext in ALLOWED_EXTENSIONS]
-    return render_template('index.html', allowed_extensions_for_accept=formatted_extensions)
+    return render_template('index.html', allowed_extensions_for_accept=formatted_extensions, model_name=model_name)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

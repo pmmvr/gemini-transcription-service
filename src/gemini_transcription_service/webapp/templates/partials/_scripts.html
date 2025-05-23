@@ -249,59 +249,156 @@
         const applyButton = document.getElementById('apply-speaker-names');
         const downloadModifiedBtn = document.getElementById('download-modified');
         
-        if (transcriptContent) {
+        // Track current speaker names and their original speaker numbers
+        let speakerMapping = {}; // Maps current names to original speaker numbers
+        let originalSpeakerNumbers = {}; // Maps original speaker numbers to current names
+        
+        function extractSpeakers() {
             const text = transcriptContent.value;
-            const speakerRegex = /\[(Speaker \d+)/g;
-            const uniqueSpeakers = new Set();
+            // Find all text within square brackets
+            const bracketRegex = /\[([^\]]+)\]/g;
+            const speakerInstances = new Map(); // Track each unique speaker and their occurrences
             
-            // Extract speakers
+            // Extract all speaker names and count their occurrences
             let match;
-            while ((match = speakerRegex.exec(text)) !== null) {
-                uniqueSpeakers.add(match[1]);
+            while ((match = bracketRegex.exec(text)) !== null) {
+                let content = match[1].trim();
+                
+                // Extract just the speaker name, removing timestamps and parentheses
+                // Remove timestamps like "01:23" or "(01:23:45)"
+                let speakerName = content
+                    .replace(/\s*\d{1,2}:\d{2}(?::\d{2})?\s*$/, '') // Remove HH:MM or HH:MM:SS at end
+                    .replace(/\s*\([^)]+\)\s*$/, '') // Remove anything in parentheses at end
+                    .trim();
+                
+                if (speakerName && !speakerName.match(/^\d{1,2}:\d{2}/)) { // Ensure it's not just a timestamp
+                    speakerInstances.set(speakerName, (speakerInstances.get(speakerName) || 0) + 1);
+                }
             }
             
-            // Create UI elements
-            Array.from(uniqueSpeakers).sort().forEach(speaker => {
+            // Clear and rebuild speaker list
+            speakerList.innerHTML = '';
+            
+            // Sort speakers and create UI elements
+            const sortedSpeakers = Array.from(speakerInstances.entries()).sort((a, b) => {
+                // First try to sort by speaker number if they match the pattern
+                const aMatch = a[0].match(/Speaker (\d+)/);
+                const bMatch = b[0].match(/Speaker (\d+)/);
+                if (aMatch && bMatch) {
+                    return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+                }
+                // Otherwise sort alphabetically
+                return a[0].localeCompare(b[0]);
+            });
+            
+            sortedSpeakers.forEach(([speaker, count]) => {
                 const speakerItem = document.createElement('div');
                 speakerItem.className = 'speaker-item fade-in';
                 
                 const label = document.createElement('label');
-                label.textContent = speaker;
+                label.textContent = `${speaker} (${count} occurrences)`;
                 label.className = 'block text-sm font-medium text-slate-700 mb-1';
                 
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.placeholder = 'Enter real name';
-                input.dataset.speaker = speaker;
+                input.dataset.currentSpeaker = speaker;
                 input.className = 'w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors';
+                
+                // If we have a previous mapping for this speaker, pre-fill the input
+                const originalNumber = Object.keys(originalSpeakerNumbers).find(key => 
+                    originalSpeakerNumbers[key] === speaker
+                );
+                if (originalNumber && speakerMapping[originalNumber]) {
+                    input.value = speakerMapping[originalNumber];
+                }
                 
                 speakerItem.appendChild(label);
                 speakerItem.appendChild(input);
                 speakerList.appendChild(speakerItem);
             });
+        }
+        
+        if (transcriptContent) {
+            // Initial extraction
+            extractSpeakers();
             
             // Apply speaker replacements
             applyButton.addEventListener('click', function() {
                 let modifiedText = transcriptContent.value;
                 const inputs = speakerList.querySelectorAll('input');
+                const replacements = [];
 
                 // Helper function to escape special characters for regex
                 function escapeRegExp(string) {
-                    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 }
                 
+                // Check for duplicate names
+                const nameCount = {};
                 inputs.forEach(input => {
-                    const originalSpeaker = input.dataset.speaker;
                     const newName = input.value.trim();
-                    
                     if (newName) {
-                        const escapedSpeaker = escapeRegExp(originalSpeaker);
-                        const regex = new RegExp(`\\[${escapedSpeaker}`, 'g');
-                        modifiedText = modifiedText.replace(regex, `[${newName}`);
+                        nameCount[newName] = (nameCount[newName] || 0) + 1;
                     }
                 });
                 
+                // Warn about duplicates
+                const duplicates = Object.entries(nameCount).filter(([name, count]) => count > 1);
+                if (duplicates.length > 0) {
+                    const duplicateNames = duplicates.map(([name, count]) => `"${name}" (used ${count} times)`).join(', ');
+                    if (!confirm(`Warning: The following names are used for multiple speakers: ${duplicateNames}.\n\nThis might make it confusing to distinguish between speakers. Do you want to continue?`)) {
+                        return;
+                    }
+                }
+                
+                // Collect all replacements first
+                inputs.forEach(input => {
+                    const currentSpeaker = input.dataset.currentSpeaker;
+                    const newName = input.value.trim();
+                    
+                    if (newName && newName !== currentSpeaker) {
+                        replacements.push({
+                            current: currentSpeaker,
+                            new: newName
+                        });
+                        
+                        // Update tracking
+                        // Find if this was an original speaker
+                        const speakerMatch = currentSpeaker.match(/Speaker (\d+)/);
+                        if (speakerMatch) {
+                            const speakerNumber = speakerMatch[0];
+                            speakerMapping[speakerNumber] = newName;
+                            originalSpeakerNumbers[speakerNumber] = newName;
+                        } else {
+                            // This is a renamed speaker, find its original number
+                            const originalNumber = Object.keys(originalSpeakerNumbers).find(key => 
+                                originalSpeakerNumbers[key] === currentSpeaker
+                            );
+                            if (originalNumber) {
+                                speakerMapping[originalNumber] = newName;
+                                originalSpeakerNumbers[originalNumber] = newName;
+                            }
+                        }
+                    }
+                });
+                
+                // Sort replacements by length (longest first) to avoid partial replacements
+                replacements.sort((a, b) => b.current.length - a.current.length);
+                
+                // Apply replacements
+                replacements.forEach(({current, new: newName}) => {
+                    const escapedSpeaker = escapeRegExp(current);
+                    // Match speaker name in brackets with optional timestamps
+                    // This will match [Speaker], [Speaker 01:23], [Speaker (timestamp)], etc.
+                    const regex = new RegExp(`\\[${escapedSpeaker}((?:\\s+\\d{1,2}:\\d{2}(?::\\d{2})?)?(?:\\s*\\([^)]+\\))?)\\]`, 'g');
+                    modifiedText = modifiedText.replace(regex, `[${newName}$1]`);
+                });
+                
                 transcriptContent.value = modifiedText;
+                
+                // Re-extract speakers to update the UI with new names
+                extractSpeakers();
             });
             
             // Download handler
