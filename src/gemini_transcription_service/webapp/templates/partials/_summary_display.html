@@ -1,29 +1,84 @@
-<!-- Summary tab -->
-<div class="tab-content hidden border border-t-0 border-gray-200 bg-white rounded-b-md p-5" id="summary-tab" role="tabpanel" aria-labelledby="summary-tab">
-    <div id="summary-section" class="hidden pt-5">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-700">Meeting Summary:</h2>
-            <div class="flex gap-3">
-                <a href="#" id="download-summary" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Summary (.txt)</a>
-                <button id="copy-summary-btn" class="py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">Copy to Clipboard</button>
+<!-- Summary Tab Content -->
+<div class="tab-content hidden" id="summary-tab" role="tabpanel" aria-labelledby="summary-tab">
+    <div id="summary-section" class="hidden fade-in">
+        <div class="space-y-6">
+            <!-- Summary Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">Meeting Summary</h2>
+                    <p class="text-sm text-slate-500 mt-1">AI-generated summary of your meeting transcript</p>
+                </div>
+                <div class="flex gap-3">
+                    <button id="copy-summary-btn" class="inline-flex items-center px-4 py-2 bg-white text-slate-700 font-medium text-sm rounded-lg border border-slate-300 hover:bg-slate-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                        </svg>
+                        Copy
+                    </button>
+                    <a href="#" id="download-summary" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Download
+                    </a>
+                </div>
             </div>
-        </div>
-        
-        <textarea id="summary-content" class="w-full h-72 p-3 border border-gray-300 rounded-md font-sans resize-y mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-        
-        <div class="flex space-x-3">
-            <button id="feedback-btn" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Provide Feedback on Summary</button>
-        </div>
-        
-        <!-- Feedback panel -->
-        <div id="feedback-panel" class="hidden mt-5 p-4 border border-gray-200 rounded-md bg-gray-50">
-            <div class="font-semibold mb-3 text-gray-700">What would you like to improve about this summary?</div>
-            <textarea id="summary-feedback" placeholder="Please explain what aspects of the summary you'd like to improve..." class="w-full h-20 p-3 border border-gray-300 rounded-md font-sans resize-y mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-            <div class="flex space-x-3">
-                <button id="regenerate-btn" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Regenerate Summary</button>
-                <button id="cancel-feedback-btn" class="py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Cancel</button>
+            
+            <!-- Summary Content -->
+            <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+                <div class="px-4 py-3 bg-white border-b border-slate-200">
+                    <h3 class="text-sm font-medium text-slate-900 flex items-center">
+                        <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                        Summary Content
+                    </h3>
+                </div>
+                <textarea id="summary-content" class="w-full h-96 p-4 text-sm text-slate-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset"></textarea>
             </div>
-            <div id="regenerate-loading" class="hidden text-center my-5 text-gray-500 italic before:content-['⏳_Regenerating_summary...']"></div>
+            
+            <!-- Feedback Section -->
+            <div class="flex items-center justify-between">
+                <button id="feedback-btn" class="inline-flex items-center px-4 py-2 bg-white text-slate-700 font-medium text-sm rounded-lg border border-slate-300 hover:bg-slate-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                    </svg>
+                    Provide Feedback
+                </button>
+            </div>
+            
+            <!-- Feedback Panel -->
+            <div id="feedback-panel" class="hidden fade-in">
+                <div class="bg-amber-50 rounded-lg border border-amber-200 p-6">
+                    <h4 class="text-sm font-medium text-slate-900 mb-3">Improve This Summary</h4>
+                    <p class="text-sm text-slate-600 mb-4">Tell us what you'd like to change about this summary and we'll regenerate it based on your feedback.</p>
+                    <textarea id="summary-feedback" placeholder="e.g., Make it more concise, focus on action items, include more technical details..." class="w-full h-24 p-3 text-sm border border-slate-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4"></textarea>
+                    <div class="flex gap-3">
+                        <button id="regenerate-btn" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Regenerate Summary
+                        </button>
+                        <button id="cancel-feedback-btn" class="inline-flex items-center px-4 py-2 bg-white text-slate-700 font-medium text-sm rounded-lg border border-slate-300 hover:bg-slate-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Regenerate Loading -->
+                <div id="regenerate-loading" class="hidden fade-in mt-4">
+                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                        <div class="flex items-center justify-center">
+                            <svg class="w-5 h-5 text-indigo-600 animate-spin mr-3" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-sm font-medium text-slate-900">Regenerating summary with your feedback...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div> 
+</div>

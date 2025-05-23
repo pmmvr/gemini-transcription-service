@@ -1,28 +1,87 @@
-<!-- File info display -->
-<div id="fileInfoDisplay" class="hidden mb-4 p-3 rounded-md bg-blue-100 border border-blue-200 text-blue-800">
-    <div class="flex items-center justify-between">
-        <div>
-            <span class="font-medium">Selected File: </span>
-            <span id="selectedFileName">No file selected</span>
+<!-- File Upload Form -->
+<form method="post" enctype="multipart/form-data" action="{{ url_for('upload_file') }}" id="uploadForm" class="space-y-6">
+    <!-- Drop Area -->
+    <div id="drop-area" class="relative group p-12 border-2 border-dashed border-slate-300 rounded-xl text-center hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer">
+        <input type="file" name="file" id="fileInput" accept="{{ allowed_extensions_for_accept | join(',') }}" class="hidden">
+        <label for="fileInput" class="cursor-pointer">
+            <div class="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+            </div>
+            <p class="mt-4 text-base font-medium text-slate-900">Drop your audio file here, or click to browse</p>
+            <p class="text-sm text-slate-500 mt-1">Supports MP3, WAV, M4A, and other audio formats</p>
+        </label>
+    </div>
+
+    <!-- File Info Display -->
+    <div id="fileInfoDisplay" class="hidden fade-in">
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-slate-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-slate-900" id="selectedFileName">No file selected</p>
+                        <div class="flex items-center space-x-3 mt-1">
+                            <p class="text-xs text-slate-500">Size: <span id="file-size"></span></p>
+                            <p id="file-duration" class="text-xs text-slate-500 hidden">Duration: <span id="duration-text"></span></p>
+                        </div>
+                    </div>
+                </div>
+                <button id="clearFileBtn" type="button" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
-        <button id="clearFileBtn" class="text-blue-700 hover:text-blue-900" type="button">×</button>
     </div>
-</div>
 
-<!-- Client-side duration warning -->
-<div id="durationWarning" class="hidden mb-4 p-3 rounded-md bg-yellow-100 border border-yellow-300 text-yellow-800">
-    Warning: The selected audio is longer than 50 minutes. If transcription fails or times out, please consider splitting it into smaller segments.
-</div>
-
-<!-- Upload form -->
-<form method=post enctype=multipart/form-data action="{{ url_for('upload_file') }}" id="uploadForm" class="mb-8 text-center">
-    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4 hover:bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500 transition-all">
-        <input type="file" name="file" id="fileInput" accept="{{ allowed_extensions_for_accept | join(',') }}" class="w-full cursor-pointer p-2 mb-2 text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+    <!-- Duration Warning -->
+    <div id="durationWarning" class="hidden fade-in">
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div class="flex">
+                <svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <div class="ml-3">
+                    <p class="text-sm text-amber-800 font-medium">Long recording detected</p>
+                    <p class="text-xs text-amber-700 mt-1">Audio files longer than 50 minutes may have reduced transcription quality. Consider splitting into smaller segments.</p>
+                </div>
+            </div>
+        </div>
     </div>
-    <button type="submit" id="submitButton" class="py-2 px-6 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors">Upload and Transcribe</button>
+
+    <!-- Submit Button -->
+    <button type="submit" id="submitButton" class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+        <span class="flex items-center justify-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+            Upload and Transcribe
+        </span>
+    </button>
 </form>
 
-<!-- Loading indicator -->
-<div id="loadingIndicator" class="hidden text-center my-8 text-gray-600 text-lg italic">
-    Processing your file... Please wait.
-</div> 
+<!-- Loading Indicator -->
+<div id="loadingIndicator" class="hidden fade-in">
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-200">
+        <div class="flex items-center justify-center">
+            <div class="relative">
+                <div class="absolute inset-0 bg-indigo-200 rounded-full animate-ping"></div>
+                <div class="relative bg-white rounded-full p-3">
+                    <svg class="w-6 h-6 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-slate-900">Processing your audio file...</p>
+                <p class="text-xs text-slate-500 mt-1">This may take a few moments</p>
+            </div>
+        </div>
+    </div>
+</div>

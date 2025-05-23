@@ -5,21 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Gemini Transcription Service</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- TODO: Use build process with PostCSS for production -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
-    <div class="max-w-4xl mx-auto my-8 p-8 bg-white rounded-lg shadow-md">
-        <h1 class="text-2xl md:text-3xl font-bold text-blue-600 text-center mb-6">Upload Audio for Transcription</h1>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                    </svg>
+                    <h1 class="text-xl font-semibold text-slate-900">Transcription Studio</h1>
+                </div>
+                {% if model_name %}
+                <div class="text-sm text-slate-500 border border-slate-300 px-2 py-1 rounded-md text-right">
+                  <div class="font-semibold">Powered by Gemini</div>
+                  <div class="text-xs text-slate-400">{{ model_name }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
 
-        {% include 'partials/_flash_messages.html' %}
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-8 border-b border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900 text-center">Upload Audio for Transcription</h2>
+                <p class="text-center text-slate-600 mt-2">Transform your audio into accurate transcripts and summaries</p>
+            </div>
 
-        {% include 'partials/_file_upload_form.html' %}
+            <div class="p-8">
+                {% include 'partials/_flash_messages.html' %}
 
-        {% if transcript %}
-            {% include 'partials/_transcript_display.html' %}
-            {% include 'partials/_summary_display.html' %}
-        {% endif %}
-    </div>
+                <!-- Initial Upload Section -->
+                <div id="initialUploadSection">
+                    {% include 'partials/_file_upload_form.html' %}
+                </div>
+
+                <!-- Transcription Result Section -->
+                <div id="transcriptionResultSection" class="{% if not transcript %}hidden{% endif %}">
+                    <div class="my-6 text-center">
+                        <button id="uploadAnotherFileBtn" class="px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-md hover:bg-slate-300 transition-colors">
+                            Upload Another File
+                        </button>
+                    </div>
+                    {% if transcript %}
+                        {% include 'partials/_transcript_display.html' %}
+                        {% include 'partials/_summary_display.html' %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
 
     {% include 'partials/_scripts.html' %}
 </body>

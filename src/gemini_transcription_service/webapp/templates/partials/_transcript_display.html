@@ -1,42 +1,103 @@
-<!-- Tab navigation -->
-<div class="border-b border-gray-200" role="tablist">
-    <div class="flex space-x-2">
-        <button class="tab active px-4 py-2 border-t border-l border-r rounded-t-md bg-white border-gray-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset" data-tab="transcript" role="tab" aria-selected="true" aria-controls="transcript-tab">Transcript</button>
-        <button class="tab px-4 py-2 border-t border-l border-r rounded-t-md bg-gray-100 border-gray-200 font-normal focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset" data-tab="summary" role="tab" aria-selected="false" aria-controls="summary-tab">Meeting Summary</button>
+<!-- Tab Navigation -->
+<div class="border-b border-slate-200 mb-6" role="tablist">
+    <div class="flex space-x-1">
+        <button class="tab active px-6 py-3 font-medium text-sm transition-all duration-200 border-b-2 border-indigo-600 text-indigo-600 focus:outline-none" data-tab="transcript" role="tab" aria-selected="true" aria-controls="transcript-tab">
+            <span class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <span>Transcript</span>
+            </span>
+        </button>
+        <button class="tab px-6 py-3 font-medium text-sm text-slate-600 hover:text-slate-900 transition-all duration-200 border-b-2 border-transparent hover:border-slate-300 focus:outline-none" data-tab="summary" role="tab" aria-selected="false" aria-controls="summary-tab">
+            <span class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+                <span>Meeting Summary</span>
+            </span>
+        </button>
     </div>
 </div>
 
-<!-- Transcript tab -->
-<div class="tab-content active border border-t-0 border-gray-200 bg-white rounded-b-md p-5" id="transcript-tab" role="tabpanel" aria-labelledby="transcript-tab">
-    <div class="p-6 rounded-md bg-gray-50 border border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Transcription Result:</h2>
-        
-        <div class="mt-4">
-            <div class="flex flex-col md:flex-row gap-5">
-                <div class="flex-grow">
-                    <textarea id="transcript-content" class="w-full h-96 p-3 border border-gray-300 rounded-md font-mono resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ transcript }}</textarea>
+<!-- Transcript Tab Content -->
+<div class="tab-content active fade-in" id="transcript-tab" role="tabpanel" aria-labelledby="transcript-tab">
+    <div class="space-y-6">
+        <!-- Transcript Editor -->
+        <div class="grid lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+                    <div class="px-4 py-3 bg-white border-b border-slate-200">
+                        <h3 class="text-sm font-medium text-slate-900 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                            </svg>
+                            Transcript Editor
+                        </h3>
+                    </div>
+                    <textarea id="transcript-content" class="w-full h-[500px] p-4 font-mono text-sm text-slate-800 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-inset">{{ transcript }}</textarea>
                 </div>
-                <!-- Speaker replacement panel -->
-                <div class="w-full md:w-1/3 bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <h3 class="font-semibold mb-3 text-gray-700">Replace Speakers</h3>
-                    <div id="speaker-list" class="max-h-72 overflow-y-auto mb-4 space-y-3"></div>
-                    <button id="apply-speaker-names" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Apply Changes</button>
+            </div>
+            
+            <!-- Speaker Replacement Panel -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden sticky top-6">
+                    <div class="px-4 py-3 border-b border-slate-200">
+                        <h3 class="text-sm font-medium text-slate-900 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            Speaker Names
+                        </h3>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div id="speaker-list" class="max-h-80 overflow-y-auto space-y-2"></div>
+                        <button id="apply-speaker-names" class="w-full px-4 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg hover:bg-indigo-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            Apply Changes
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Download options -->
-        {% if download_filename %}
-        <div class="flex justify-end gap-3 mt-4">
-            <a href="{{ url_for('download_file', filename=download_filename) }}" download class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Original (.txt)</a>
-            <a href="#" id="download-modified" class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Download Modified (.txt)</a>
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <button id="generate-summary-btn" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium text-sm rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                Generate Meeting Summary
+            </button>
+            
+            {% if download_filename %}
+            <div class="flex gap-3">
+                <a href="{{ url_for('download_file', filename=download_filename) }}" download class="inline-flex items-center px-4 py-2.5 bg-white text-slate-700 font-medium text-sm rounded-lg border border-slate-300 hover:bg-slate-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Download Original
+                </a>
+                <a href="#" id="download-modified" class="inline-flex items-center px-4 py-2.5 bg-white text-slate-700 font-medium text-sm rounded-lg border border-slate-300 hover:bg-slate-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Download Modified
+                </a>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
         
-        <div class="flex space-x-3 mt-6">
-            <button id="generate-summary-btn" class="py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">Generate Meeting Summary</button>
+        <!-- Loading Indicator -->
+        <div id="summary-loading" class="hidden fade-in">
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                <div class="flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600 animate-spin mr-3" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="text-sm font-medium text-slate-900">Generating summary...</p>
+                </div>
+            </div>
         </div>
-        
-        <div id="summary-loading" class="hidden text-center my-5 text-gray-500 italic before:content-['⏳_Generating_summary...']"></div>
     </div>
-</div> 
+</div>

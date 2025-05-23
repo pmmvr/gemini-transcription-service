@@ -1,25 +1,62 @@
 <script>
+    // UI Elements
     const uploadForm = document.getElementById('uploadForm');
     const fileInput = document.getElementById('fileInput');
     const submitButton = document.getElementById('submitButton');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const originalFilePath = "{% if original_filepath %}{{ original_filepath }}{% else %}{% endif %}";
-    const flashMessages = document.getElementById('flash-messages');
     const fileInfoDisplay = document.getElementById('fileInfoDisplay');
     const selectedFileName = document.getElementById('selectedFileName');
     const clearFileBtn = document.getElementById('clearFileBtn');
     const durationWarningDiv = document.getElementById('durationWarning');
+    const dropArea = document.getElementById('drop-area');
     const LONG_AUDIO_THRESHOLD_MINUTES = 50;
+    const initialUploadSection = document.getElementById('initialUploadSection');
+    const transcriptionResultSection = document.getElementById('transcriptionResultSection');
+    const uploadAnotherFileBtn = document.getElementById('uploadAnotherFileBtn');
     
-    // Auto-hide flash messages after 5 seconds if they're showing
-    if (flashMessages) {
+    // Auto-hide flash messages after 5 seconds
+    document.querySelectorAll('.flash-message').forEach(msg => {
         setTimeout(() => {
-            flashMessages.style.transition = 'opacity 0.5s ease-out';
-            flashMessages.style.opacity = '0';
-            setTimeout(() => {
-                flashMessages.style.display = 'none';
-            }, 500);
+            msg.style.transition = 'opacity 0.5s ease-out';
+            msg.style.opacity = '0';
+            setTimeout(() => msg.remove(), 500);
         }, 5000);
+    });
+
+    // Drag and drop functionality
+    if (dropArea) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.add('border-indigo-500', 'bg-indigo-50/50');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+            }, false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        }
     }
     
     // Show file info immediately after selection
@@ -29,8 +66,10 @@
             const fileName = file.name;
             const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Size in MB
             
-            selectedFileName.textContent = `${fileName} (${fileSize} MB)`;
+            selectedFileName.textContent = fileName;
+            document.getElementById('file-size').textContent = `${fileSize} MB`;
             fileInfoDisplay.classList.remove('hidden');
+            fileInfoDisplay.classList.add('fade-in');
             durationWarningDiv.classList.add('hidden');
 
             // Check audio duration client-side
@@ -42,9 +81,13 @@
                     const durationSeconds = audio.duration;
                     if (durationSeconds) {
                         const durationMinutes = durationSeconds / 60;
-                        console.log(`Client-side detected duration: ${durationMinutes.toFixed(2)} minutes`);
+                        const durationText = formatDuration(durationSeconds);
+                        document.getElementById('duration-text').textContent = durationText;
+                        document.getElementById('file-duration').classList.remove('hidden');
+                        
                         if (durationMinutes > LONG_AUDIO_THRESHOLD_MINUTES) {
                             durationWarningDiv.classList.remove('hidden');
+                            durationWarningDiv.classList.add('fade-in');
                         } else {
                             durationWarningDiv.classList.add('hidden');
                         }
@@ -60,9 +103,7 @@
             }
             
             // Hide flash messages when a new file is selected
-            if (flashMessages) {
-                flashMessages.style.display = 'none';
-            }
+            document.querySelectorAll('.flash-message').forEach(msg => msg.remove());
         } else {
             fileInfoDisplay.classList.add('hidden');
         }
@@ -87,28 +128,88 @@
         fileInfoDisplay.classList.add('hidden');
         
         submitButton.disabled = true;
-        submitButton.textContent = 'Uploading...';
+        submitButton.querySelector('span').textContent = 'Uploading...';
         loadingIndicator.classList.remove('hidden');
+        loadingIndicator.classList.add('fade-in');
         
         // Clear flash messages on new upload
-        if (flashMessages) {
-            flashMessages.style.display = 'none';
-        }
+        document.querySelectorAll('.flash-message').forEach(msg => msg.remove());
     });
+
+    // Format duration helper
+    function formatDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = Math.floor(seconds % 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m ${secs}s`;
+        } else if (minutes > 0) {
+            return `${minutes}m ${secs}s`;
+        } else {
+            return `${secs}s`;
+        }
+    }
 
     // Init on page load
     document.addEventListener('DOMContentLoaded', function() {
         // Check if we have a successful transcription result
         const transcriptContent = document.getElementById('transcript-content');
         
-        // If we have a transcript result, hide any success messages
-        if (transcriptContent && flashMessages) {
-            // Check if flash messages contain only success messages (not errors)
-            const errorMessages = flashMessages.querySelectorAll('.bg-red-100');
-            if (errorMessages.length === 0) {
-                // No error messages, so hide all flash messages
-                flashMessages.style.display = 'none';
+        if (transcriptContent && transcriptContent.value.trim() !== "") {
+            // If there's a transcript, hide initial upload and show results
+            if (initialUploadSection) initialUploadSection.classList.add('hidden');
+            if (transcriptionResultSection) transcriptionResultSection.classList.remove('hidden');
+            if (uploadAnotherFileBtn) uploadAnotherFileBtn.classList.remove('hidden'); // Show the button
+
+            // Scroll to the transcript editor or top of results
+            const transcriptEditor = document.getElementById('transcript-editor-card');
+            if (transcriptEditor) {
+                transcriptEditor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (transcriptionResultSection) {
+                transcriptionResultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
+
+        } else {
+            // If no transcript, show initial upload and hide results (normal initial state)
+            if (initialUploadSection) initialUploadSection.classList.remove('hidden');
+            if (transcriptionResultSection) transcriptionResultSection.classList.add('hidden');
+            if (uploadAnotherFileBtn) uploadAnotherFileBtn.classList.add('hidden'); // Hide the button
+        }
+
+        // Event listener for "Upload Another File" button
+        if (uploadAnotherFileBtn) {
+            uploadAnotherFileBtn.addEventListener('click', function() {
+                if (initialUploadSection) initialUploadSection.classList.remove('hidden');
+                if (transcriptionResultSection) transcriptionResultSection.classList.add('hidden');
+                if (uploadAnotherFileBtn) uploadAnotherFileBtn.classList.add('hidden');
+
+                // Clear previous file input and info
+                if (fileInput) fileInput.value = ''; // Clear the file input
+                if (fileInfoDisplay) fileInfoDisplay.classList.add('hidden');
+                if (selectedFileName) selectedFileName.textContent = 'No file selected';
+                if (document.getElementById('file-size')) document.getElementById('file-size').textContent = '';
+                if (document.getElementById('file-duration')) document.getElementById('file-duration').classList.add('hidden');
+                if (durationWarningDiv) durationWarningDiv.classList.add('hidden');
+                
+                // Clear any existing transcript content from previous session (if elements exist)
+                const tc = document.getElementById('transcript-content');
+                if (tc) tc.value = '';
+                const sl = document.getElementById('speaker-list');
+                if (sl) sl.innerHTML = ''; // Clear speaker inputs
+                const sc = document.getElementById('summary-content');
+                if (sc) sc.value = '';
+                const ss = document.getElementById('summary-section');
+                if (ss) ss.classList.add('hidden');
+
+
+                // Scroll to the top or to the upload section
+                if (initialUploadSection) {
+                    initialUploadSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
         }
         
         const tabs = document.querySelectorAll('.tab');
@@ -122,12 +223,12 @@
                     
                     // Update tabs
                     tabs.forEach(t => {
-                        t.classList.remove('active', 'bg-white', 'font-medium');
-                        t.classList.add('bg-gray-100', 'font-normal');
+                        t.classList.remove('active', 'border-indigo-600', 'text-indigo-600');
+                        t.classList.add('border-transparent', 'text-slate-600');
                         t.setAttribute('aria-selected', 'false');
                     });
-                    this.classList.remove('bg-gray-100', 'font-normal');
-                    this.classList.add('active', 'bg-white', 'font-medium');
+                    this.classList.remove('border-transparent', 'text-slate-600');
+                    this.classList.add('active', 'border-indigo-600', 'text-indigo-600');
                     this.setAttribute('aria-selected', 'true');
                     
                     // Update content
@@ -162,17 +263,17 @@
             // Create UI elements
             Array.from(uniqueSpeakers).sort().forEach(speaker => {
                 const speakerItem = document.createElement('div');
-                speakerItem.className = 'p-3 bg-white rounded border border-gray-200';
+                speakerItem.className = 'speaker-item fade-in';
                 
                 const label = document.createElement('label');
                 label.textContent = speaker;
-                label.className = 'block mb-2 font-medium text-gray-700';
+                label.className = 'block text-sm font-medium text-slate-700 mb-1';
                 
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.placeholder = 'Enter real name';
                 input.dataset.speaker = speaker;
-                input.className = 'w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+                input.className = 'w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors';
                 
                 speakerItem.appendChild(label);
                 speakerItem.appendChild(input);
@@ -183,14 +284,20 @@
             applyButton.addEventListener('click', function() {
                 let modifiedText = transcriptContent.value;
                 const inputs = speakerList.querySelectorAll('input');
+
+                // Helper function to escape special characters for regex
+                function escapeRegExp(string) {
+                    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                }
                 
                 inputs.forEach(input => {
-                    const speaker = input.dataset.speaker;
-                    const realName = input.value.trim();
+                    const originalSpeaker = input.dataset.speaker;
+                    const newName = input.value.trim();
                     
-                    if (realName) {
-                        const regex = new RegExp(`\[${speaker}`, 'g');
-                        modifiedText = modifiedText.replace(regex, `[${realName}`);
+                    if (newName) {
+                        const escapedSpeaker = escapeRegExp(originalSpeaker);
+                        const regex = new RegExp(`\\[${escapedSpeaker}`, 'g');
+                        modifiedText = modifiedText.replace(regex, `[${newName}`);
                     }
                 });
                 
@@ -240,15 +347,14 @@
                         navigator.clipboard.writeText(summaryContent.value)
                             .then(() => {
                                 // Visual feedback
-                                const originalText = this.textContent;
-                                this.textContent = 'Copied!';
-                                this.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-                                this.classList.add('bg-green-600', 'hover:bg-green-700');
+                                const span = this.querySelector('span') || this;
+                                const originalText = span.textContent;
+                                span.textContent = 'Copied!';
+                                this.classList.add('bg-green-50', 'border-green-300', 'text-green-700');
                                 
                                 setTimeout(() => {
-                                    this.textContent = originalText;
-                                    this.classList.remove('bg-green-600', 'hover:bg-green-700');
-                                    this.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                                    span.textContent = originalText;
+                                    this.classList.remove('bg-green-50', 'border-green-300', 'text-green-700');
                                 }, 2000);
                             })
                             .catch(err => {
@@ -277,8 +383,11 @@
                     
                     // UI: loading
                     summaryLoading.classList.remove('hidden');
+                    summaryLoading.classList.add('fade-in');
                     generateSummaryBtn.disabled = true;
-                    generateSummaryBtn.textContent = 'Generating...';
+                    const btnSpan = generateSummaryBtn.querySelector('span');
+                    if (btnSpan) btnSpan.textContent = 'Generating...';
+                    else generateSummaryBtn.textContent = 'Generating...';
                     
                     // API call
                     fetch('/generate-summary', {
@@ -297,7 +406,9 @@
                         // Reset UI
                         summaryLoading.classList.add('hidden');
                         generateSummaryBtn.disabled = false;
-                        generateSummaryBtn.textContent = 'Generate Meeting Summary';
+                        const btnSpan1 = generateSummaryBtn.querySelector('span');
+                        if (btnSpan1) btnSpan1.textContent = 'Generate Meeting Summary';
+                        else generateSummaryBtn.textContent = 'Generate Meeting Summary';
                         
                         if (data.success) {
                             // Show summary
@@ -322,7 +433,9 @@
                         // Error handling
                         summaryLoading.classList.add('hidden');
                         generateSummaryBtn.disabled = false;
-                        generateSummaryBtn.textContent = 'Generate Meeting Summary';
+                        const btnSpan2 = generateSummaryBtn.querySelector('span');
+                        if (btnSpan2) btnSpan2.textContent = 'Generate Meeting Summary';
+                        else generateSummaryBtn.textContent = 'Generate Meeting Summary';
                         alert('Error: ' + error);
                     });
                 });
@@ -332,6 +445,7 @@
             if (feedbackBtn) {
                 feedbackBtn.addEventListener('click', function() {
                     feedbackPanel.classList.remove('hidden');
+                    feedbackPanel.classList.add('fade-in');
                     summaryFeedback.focus();
                 });
             }
@@ -356,6 +470,7 @@
                     
                     // UI: loading
                     regenerateLoading.classList.remove('hidden');
+                    regenerateLoading.classList.add('fade-in');
                     regenerateBtn.disabled = true;
                     regenerateBtn.textContent = 'Regenerating...';
                     
